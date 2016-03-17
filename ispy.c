@@ -83,7 +83,10 @@ int main(int argc, char *argv[])
 		for(p = buf; p < buf + numread; ){
 			event = (struct inotify_event *) p;
 			if(event->mask & IN_CREATE){
-				printf("CREATED\n");
+				/*Log the event to console*/
+				printf("Event: IN_CREATE\n");
+				printf("Name: %s\n", event->name);
+				printf("\n");
 
 				/*If the new file being created is a dir, add it to the watch list
 				 * and add a new path key*/
@@ -118,11 +121,28 @@ int main(int argc, char *argv[])
 		
 			
 			if(event->mask & IN_DELETE){
-				printf("In Delete\n");
+				printf("Event: IN_DELETE\n");
+				printf("Name: %s\n", event->name);
+				printf("\n");
+
+				/*If the file being deleted is a dir, remove it from the watch list
+				 * and remove its watch path key */
+				if(event->mask & IN_ISDIR){
+					if(inotify_rm_watch(inotify_fd, event->wd) == -1){
+						printf("Error removing a deleted dir from queue aborting\n");
+						return -1;
+					}
+					if(rm_path_key(event->wd) == -1){
+						printf("Error removing path key for deleted directory\n");
+						return -1;
+					}
+			        }
 			}
 
-			if(event->mask & IN_ATTRIB){
-				printf("In Attrib\n");
+			if(event->mask & IN_MOVED_FROM){
+				printf("Event: IN_MOVED_FROM\n");
+				printf("Name: %s\n", event->name);
+				printf("\n");
 			}
 			p += sizeof(struct inotify_event) + event->len;
 		}

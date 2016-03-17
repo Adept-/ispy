@@ -52,5 +52,54 @@ struct pathkey *search_path_key(int wd)
 	
 }
 
+/* Function takes a watch discriptor, finds the path key with that discriptor and removes it
+ * return -1 on error */
+int rm_path_key(int wd)
+{
+	struct pathkey *pk;
+	for(pk = root; pk->next != NULL; pk = pk->next)
+		if(pk->wd == wd){
+
+			/*If previous and next are null the root node is the only entry
+			 * free resources and set root to NULL*/
+			if(pk->previous == NULL & pk->next == NULL){
+				free(pk->path);
+				free(pk);
+				root = NULL;
+				return 0;
+			}
+			/*If previous is null and pk->next is NOT null we are removing the root node
+			 * free resources in root and set root to root->next*/
+			if(pk->previous == NULL & pk->next != NULL){
+				struct pathkey *tmp = root;
+				root = root->next;
+				root->previous == NULL;
+				free(tmp->path);
+				free(tmp);
+				return 0;
+			}
+
+			/*If we get here we are removing a node in the middle of two others.
+			 * set pk->prev->next to pk->next and pk->next->prev pk->prv*/
+			struct pathkey *tmp = pk;
+			pk->previous->next = pk->next;
+			pk->next->previous = pk->previous;
+			free(tmp->path);
+			free(tmp);
+			return 0;
+
+		}
+
+	return -1;
+
+
+}
+
 	
 	
+
+
+
+
+
+
