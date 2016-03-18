@@ -6,6 +6,7 @@
 #include "ispy.h"
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #define BUF_LEN (10 * sizeof(struct inotify_event) + NAME_MAX + 1)
 
@@ -15,7 +16,7 @@ int inotify_fd, eventmask; /* Need access in dir() and main() */
 /* This function is called by ftw() for each file it finds in a given dir */
 int dir(const char *fpath, const struct stat *sb, int typeflag)
 {
-	int wd;
+	int wd = 0;
 	struct pathkey *pk;
 	if(typeflag == FTW_D){
 
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
 				 * and add a new path key*/
 				if(event->mask & IN_ISDIR){
 
-					/*Find the path key associated with event. Use the path from the
+					/* Find the path key associated with event. Use the path from the
 					 * key and the name in the event to build a new path to monitor */
 					if((pk = search_path_key(event->wd)) == NULL){
 						printf("Pathkey not found aborting\n");
@@ -106,10 +107,11 @@ int main(int argc, char *argv[])
 					strcat(newpath, event->name);
 
 					/* add the new path to the watch queue and add a new pathkey */
-					if((wd = inotify_add_watch(inotify_fd, newpath, eventmask)) == -1 ){
-							printf("Error adding new directory to watch queue aborting\n");
+					if((wd = inotify_add_watch(inotify_fd,newpath,eventmask)) == -1 ){
+							printf("Error adding dir to que aborting\n");
 							return -1;
 					}
+
 					if((pk = add_path_key(newpath, wd)) == NULL){
 						printf("Error adding new pathkey aborting\n");
 						return -1;
@@ -126,13 +128,27 @@ int main(int argc, char *argv[])
 				printf("\n");
 
 				/*If the file being deleted is a dir, remove it from the watch list
-				 * and remove its watch path key */
+				 * and remove its path key */
 				if(event->mask & IN_ISDIR){
-					if(inotify_rm_watch(inotify_fd, event->wd) == -1){
-						printf("Error removing a deleted dir from queue aborting\n");
+					struct pathkey *pk;
+					if((pk = search_path_key(event->wd)) == NULL){
+						printf("Error getting path key aboting\n");
 						return -1;
 					}
-					if(rm_path_key(event->wd) == -1){
+
+					/* Build the path to the directory we want to remove */
+					newpath = memset(newpath, 0x00, (NAME_MAX + 1));
+					strcat(newpath, pk->path);
+					strcat(newpath, "/");
+					strcat(newpath, event->name);
+					
+					struct pathkey *subdir;
+					if((subdir = search_path(newpath)) == NULL){
+						printf("Can't find path key aborting\n");
+						return -1;
+					}
+					
+					if(rm_path_key(subdir->wd) == -1){
 						printf("Error removing path key for deleted directory\n");
 						return -1;
 					}

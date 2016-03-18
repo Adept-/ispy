@@ -45,11 +45,24 @@ struct pathkey *search_path_key(int wd)
 {
 	struct pathkey *p;
 
-	for(p = root; p->next != NULL; p = p->next)
+	for(p = root; ; p = p->next)
 		if(p->wd == wd)
 			return p;
 	return NULL;
 	
+}
+
+/* Search the lisk for a pk with matching paths return a pointer to it.
+ * If its not found return NULL */
+
+struct pathkey *search_path(char *path)
+{
+	struct pathkey *p;
+
+	for(p = root; ; p = p->next)
+		if(strcmp(path, p->path) == 0)
+			return p;
+	return NULL;
 }
 
 /* Function takes a watch discriptor, finds the path key with that discriptor and removes it
@@ -57,7 +70,7 @@ struct pathkey *search_path_key(int wd)
 int rm_path_key(int wd)
 {
 	struct pathkey *pk;
-	for(pk = root; pk->next != NULL; pk = pk->next)
+	for(pk = root; ; pk = pk->next)
 		if(pk->wd == wd){
 
 			/*If previous and next are null the root node is the only entry
@@ -68,12 +81,11 @@ int rm_path_key(int wd)
 				root = NULL;
 				return 0;
 			}
-			/*If previous is null and pk->next is NOT null we are removing the root node
-			 * free resources in root and set root to root->next*/
-			if(pk->previous == NULL & pk->next != NULL){
-				struct pathkey *tmp = root;
-				root = root->next;
-				root->previous == NULL;
+			/* If previous is not null and pk->next is null we are removing the end node
+			 * */
+			if(pk->previous != NULL & pk->next == NULL){
+				struct pathkey *tmp = pk;
+				pk->previous->next == NULL;
 				free(tmp->path);
 				free(tmp);
 				return 0;
