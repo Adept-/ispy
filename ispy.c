@@ -127,9 +127,9 @@ int main(int argc, char *argv[])
 				printf("Name: %s\n", event->name);
 				printf("\n");
 
-				/*If the file being deleted is a dir, remove it from the watch list
-				 * and remove its path key */
+				/*If the file being deleted is a dir remove its path key */
 				if(event->mask & IN_ISDIR){
+
 					struct pathkey *pk;
 					if((pk = search_path_key(event->wd)) == NULL){
 						printf("Error getting path key aboting\n");
@@ -157,6 +157,11 @@ int main(int argc, char *argv[])
 
 			if(event->mask & IN_MOVED_FROM){
 				printf("Event: IN_MOVED_FROM\n");
+				printf("Name: %s\n", event->name);
+				printf("\n");
+			}
+			if(event->mask & IN_MOVED_TO){
+				printf("Event: IN_MOVED_T\n");
 				printf("Name: %s\n", event->name);
 				printf("\n");
 			}
