@@ -2,11 +2,6 @@ This program was inspired by the exercise in chapter 19 of "The Linux Programmin
 The program monitors a given directory and all its sub directories. The program will add new
 directories to its watch list and remove deleted directories.
 
-TODO
-======
-Finish implementing the read loop
-
-
 
 Possible future version
 ==========================
